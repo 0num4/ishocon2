@@ -275,9 +275,9 @@ app.post("/vote", (req, res) => {
     // 元コードの意図がよくわからないのでvariableにデータキャッシュして全部入れていく暴挙に走ります
     let cache = [];
     for (let i = 0; i < req.body.vote_count; i++) {
-      p = p.then(() =>
+      p = p.then(() =>{
         cache.push([user["id"], candidate["id"], req.body.keyword]);
-      );
+      });
     }
     pool.query("INSERT INTO votes (user_id, candidate_id, keyword) VALUES ?", [cache]);
     return { candidates: candidates, message: "投票に成功しました" };
