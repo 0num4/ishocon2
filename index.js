@@ -60,54 +60,33 @@ app.get("/test", (_, res) => {
   electionResults().then(r => res.json(r));
 });
 
-app.get("/", (_, res) => {
-  let p = Promise.resolve();
-
-  candidates = [];
-  p = p.then(() =>
-    electionResults().then(rows => {
-      // 上位10人と最下位のみ表示
-      candidates = rows.filter((_, i) => i < 10 || i > 28);
-    })
+app.get("/", async (_, res) => {
+  const electionResultsRows = await electionResults();
+  const parties = {};
+  // 上位10人と最下位のみ表示
+  const candidates = electionResultsRows.filter(
+    (_element, i) => i < 10 || i > 28
   );
-
-  parties = {};
-  p = p.then(() =>
-    pool
-      .query(`SELECT political_party FROM candidates GROUP BY political_party`)
-      .then(rows =>
-        rows.forEach(a => {
-          parties[a.political_party] = 0;
-        })
-      )
+  const candidatesRows = await pool.query(
+    `SELECT political_party FROM candidates GROUP BY political_party`
   );
-
-  p = p.then(() =>
-    electionResults().then(rows => {
-      rows.forEach(r => {
-        parties[r.political_party] += r.count || 0;
-      });
-    })
-  );
-
-  sexRatio = { 男: 0, 女: 0 };
-  p = p.then(() =>
-    electionResults().then(rows => {
-      rows.forEach(r => {
-        sexRatio[r.sex] += r.count || 0;
-      });
-    })
-  );
-
-  p.then(() => {
-    res.render("layout", {
-      file: "index",
-      content: {
-        candidates,
-        parties,
-        sexRatio
-      }
-    });
+  candidatesRows.forEach(a => {
+    parties[a.political_party] = 0;
+  });
+  electionResultsRows.forEach(r => {
+    parties[r.political_party] += r.count || 0;
+  });
+  const sexRatio = { 男: 0, 女: 0 };
+  electionResultsRows.forEach(r => {
+    sexRatio[r.sex] += r.count || 0;
+  });
+  await res.render("layout", {
+    file: "index",
+    content: {
+      candidates,
+      parties,
+      sexRatio
+    }
   });
 });
 
