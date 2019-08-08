@@ -209,14 +209,16 @@ app.post("/vote", (req, res) => {
         user = rows[0];
       })
       .then(() => {
-        return pool
-          .query(
-            "SELECT COUNT(*) AS count FROM votes WHERE user_id = ?",
-            user.id
-          )
-          .then(([row]) => {
-            votedCount = row.count;
-          });
+        if (user != null) {
+          return pool
+            .query(
+              "SELECT COUNT(*) AS count FROM votes WHERE user_id = ?",
+              user.id
+            )
+            .then(([row]) => {
+              votedCount = row.count;
+            });
+        }
       })
   );
 
