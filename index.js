@@ -81,6 +81,7 @@ app.get("/", async (_, res) => {
     sexRatio[r.sex] += r.count || 0;
   });
   await res.render("layout", {
+    cache: true,
     file: "index",
     content: {
       candidates,
@@ -126,6 +127,7 @@ app.get("/candidates/:id", (req, res) => {
 
   p.then(() => {
     res.render("layout", {
+      cache: true,
       file: "candidate",
       content: {
         candidate,
@@ -171,6 +173,7 @@ app.get("/political_parties/:name", (req, res) => {
 
   p.then(() => {
     res.render("layout", {
+      cache: true,
       file: "political_party",
       content: {
         politicalParty: req.params.name,
@@ -185,6 +188,7 @@ app.get("/political_parties/:name", (req, res) => {
 app.get("/vote", (_, res) => {
   pool.query("SELECT * FROM candidates").then(candidates => {
     res.render("layout", {
+      cache: true,
       file: "vote",
       content: {
         candidates,
@@ -271,6 +275,7 @@ app.post("/vote", (req, res) => {
     return { candidates, message: "投票に成功しました" };
   }).then(content =>
     res.render("layout", {
+      cache: true,
       file: "vote",
       content
     })
