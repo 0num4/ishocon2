@@ -276,7 +276,7 @@ app.post("/vote", (req, res) => {
     let cache = [];
     for (let i = 0; i < req.body.vote_count; i++) {
       p = p.then(() =>
-        cache += [user["id"], candidate["id"], req.body.keyword];
+        cache.push([user["id"], candidate["id"], req.body.keyword]);
       );
     }
     pool.query("INSERT INTO votes (user_id, candidate_id, keyword) VALUES ?", [cache]);
