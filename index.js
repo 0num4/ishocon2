@@ -271,13 +271,14 @@ app.post("/vote", (req, res) => {
     } else if (req.body.keyword == null || req.body.keyword == "") {
       return { candidates: candidates, message: "投票理由を記入してください" };
     }
+
+    // 元コードの意図がよくわからないのでvariableにデータキャッシュして全部入れていく暴挙に走ります
+    let cache = [];
     for (let i = 0; i < req.body.vote_count; i++) {
       p = p.then(() =>
-        pool.query(
-          "INSERT INTO votes (user_id, candidate_id, keyword) VALUES (?, ?, ?)",
-          [user["id"], candidate["id"], req.body.keyword]
-        )
+        cache += [user["id"], candidate["id"], req.body.keyword];
       );
+      pool.query("INSERT INTO votes (user_id, candidate_id, keyword) VALUES ?", [cache]);
     }
     return { candidates: candidates, message: "投票に成功しました" };
   }).then(content =>
