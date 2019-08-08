@@ -143,7 +143,7 @@ app.get("/political_parties/:name", (req, res) => {
   p = p.then(() =>
     electionResults().then(rows => {
       rows.forEach(r => {
-        if (r.political_party == req.params.name) {
+        if (r.political_party === req.params.name) {
           votes += r.count;
         }
       });
@@ -209,16 +209,14 @@ app.post("/vote", (req, res) => {
         user = rows[0];
       })
       .then(() => {
-        if (user != null) {
-          return pool
-            .query(
-              "SELECT COUNT(*) AS count FROM votes WHERE user_id = ?",
-              user.id
-            )
-            .then(([row]) => {
-              votedCount = row.count;
-            });
-        }
+        return pool
+          .query(
+            "SELECT COUNT(*) AS count FROM votes WHERE user_id = ?",
+            user.id
+          )
+          .then(([row]) => {
+            votedCount = row.count;
+          });
       })
   );
 
@@ -245,7 +243,7 @@ app.post("/vote", (req, res) => {
     if (user.votes < parseInt(req.body.vote_count, 10) + votedCount) {
       return { candidates, message: "投票数が上限を超えています" };
     }
-    if (req.body.candidate == null || req.body.candidate == "") {
+    if (req.body.candidate == null || req.body.candidate === "") {
       return { candidates, message: "候補者を記入してください" };
     }
     if (candidate == null) {
@@ -254,7 +252,7 @@ app.post("/vote", (req, res) => {
         message: "候補者を正しく記入してください"
       };
     }
-    if (req.body.keyword == null || req.body.keyword == "") {
+    if (req.body.keyword == null || req.body.keyword === "") {
       return { candidates, message: "投票理由を記入してください" };
     }
 
@@ -281,9 +279,10 @@ app.get("/initialize", (_, res) => {
   pool.query("DELETE FROM votes").then(() => res.send("Finish"));
 });
 
-var server = app.listen(8080, function() {
+const server = app.listen(8080, () => {
   const host = server.address().address;
   const { port } = server.address();
 
+  // eslint-disable-next-line
   console.log("Example app listening at http://%s:%s", host, port);
 });
