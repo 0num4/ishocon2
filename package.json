@@ -5,6 +5,8 @@
   "description": "Iikanjina SHOwwin CONtest",
   "main": "index.js",
   "scripts": {
+    "lint": "eslint --ignore-path .gitignore index.js",
+    "fix": "eslint --fix --ignore-path .gitignore index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -15,7 +17,14 @@
   "dependencies": {
     "body-parser": "^1.18.3",
     "ejs": "^2.6.1",
+    "eslint": "^6.1.0",
+    "eslint-config-airbnb-base": "^13.2.0",
+    "eslint-config-prettier": "^6.0.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-mysticatea": "^4.2.4",
+    "eslint-plugin-prettier": "^3.1.0",
     "express": "^4.16.3",
-    "mysql": "^2.15.0"
+    "mysql": "^2.15.0",
+    "prettier": "^1.18.2"
   }
 }

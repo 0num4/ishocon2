@@ -1,0 +1,26 @@
+{
+  "env": {
+    "node": true
+  },
+  "extends": ["airbnb-base", "prettier", "plugin:prettier/recommended"],
+  "plugins": ["mysticatea"],
+  "rules": {
+    "no-param-reassign": "off",
+    "no-use-before-define": "off",
+    "curly": ["error", "all"],
+    "sort-imports": "error",
+    "prefer-destructuring": [
+      "error",
+      {
+        "array": false,
+        "object": true
+      }
+    ],
+    "mysticatea/no-instanceof-array": "error",
+    "mysticatea/no-instanceof-wrapper": "error",
+    "mysticatea/no-literal-call": "error",
+    "mysticatea/no-this-in-static": "error",
+    "mysticatea/no-use-ignored-vars": "error",
+    "mysticatea/no-useless-rest-spread": "error"
+  }
+}

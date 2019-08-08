@@ -5,13 +5,14 @@ const bodyParser = require("body-parser");
 
 const app = express();
 
-app.set("views", __dirname + "/views");
+app.set("views", `${__dirname}/views`);
 app.set("view engine", "ejs");
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 const mysql = require("mysql");
+
 const pool = mysql.createPool({
   connectionLimit: 20,
   host: process.env.ISHOCON2_DB_HOST || "localhost",
@@ -50,7 +51,7 @@ LIMIT 10
     )
     .then(rows => {
       return rows.map(a => {
-        return a["keyword"];
+        return a.keyword;
       });
     });
 };
@@ -66,7 +67,7 @@ app.get("/", (_, res) => {
   p = p.then(() =>
     electionResults().then(rows => {
       // 上位10人と最下位のみ表示
-      candidates = rows.filter((_, i) => i < 10 || 28 < i);
+      candidates = rows.filter((_, i) => i < 10 || i > 28);
     })
   );
 
@@ -76,7 +77,7 @@ app.get("/", (_, res) => {
       .query(`SELECT political_party FROM candidates GROUP BY political_party`)
       .then(rows =>
         rows.forEach(a => {
-          parties[a["political_party"]] = 0;
+          parties[a.political_party] = 0;
         })
       )
   );
@@ -84,7 +85,7 @@ app.get("/", (_, res) => {
   p = p.then(() =>
     electionResults().then(rows => {
       rows.forEach(r => {
-        parties[r["political_party"]] += r["count"] || 0;
+        parties[r.political_party] += r.count || 0;
       });
     })
   );
@@ -93,7 +94,7 @@ app.get("/", (_, res) => {
   p = p.then(() =>
     electionResults().then(rows => {
       rows.forEach(r => {
-        sexRatio[r["sex"]] += r["count"] || 0;
+        sexRatio[r.sex] += r.count || 0;
       });
     })
   );
@@ -102,9 +103,9 @@ app.get("/", (_, res) => {
     res.render("layout", {
       file: "index",
       content: {
-        candidates: candidates,
-        parties: parties,
-        sexRatio: sexRatio
+        candidates,
+        parties,
+        sexRatio
       }
     });
   });
@@ -118,7 +119,9 @@ app.get("/candidates/:id", (req, res) => {
     pool
       .query("SELECT * FROM candidates WHERE id = ?", req.params.id)
       .then(candidates => {
-        if (candidates.length === 0) res.redirect("/");
+        if (candidates.length === 0) {
+          res.redirect("/");
+        }
         candidate = candidates[0];
       })
   );
@@ -131,7 +134,7 @@ app.get("/candidates/:id", (req, res) => {
         req.params.id
       )
       .then(([row]) => {
-        votes = row["count"];
+        votes = row.count;
       })
   );
 
@@ -146,9 +149,9 @@ app.get("/candidates/:id", (req, res) => {
     res.render("layout", {
       file: "candidate",
       content: {
-        candidate: candidate,
-        votes: votes,
-        keywords: keywords
+        candidate,
+        votes,
+        keywords
       }
     });
   });
@@ -161,8 +164,8 @@ app.get("/political_parties/:name", (req, res) => {
   p = p.then(() =>
     electionResults().then(rows => {
       rows.forEach(r => {
-        if (r["political_party"] == req.params.name) {
-          votes += r["count"];
+        if (r.political_party == req.params.name) {
+          votes += r.count;
         }
       });
     })
@@ -178,7 +181,7 @@ app.get("/political_parties/:name", (req, res) => {
       ])
       .then(rows => {
         candidates = rows;
-        candidateIds = rows.map(c => c["id"]);
+        candidateIds = rows.map(c => c.id);
       })
       .then(() => {
         voiceOfSupporter(candidateIds).then(rows => {
@@ -192,9 +195,9 @@ app.get("/political_parties/:name", (req, res) => {
       file: "political_party",
       content: {
         politicalParty: req.params.name,
-        votes: votes,
-        candidates: candidates,
-        keywords: keywords
+        votes,
+        candidates,
+        keywords
       }
     });
   });
@@ -205,7 +208,7 @@ app.get("/vote", (_, res) => {
     res.render("layout", {
       file: "vote",
       content: {
-        candidates: candidates,
+        candidates,
         message: ""
       }
     });
@@ -231,10 +234,10 @@ app.post("/vote", (req, res) => {
           return pool
             .query(
               "SELECT COUNT(*) AS count FROM votes WHERE user_id = ?",
-              user["id"]
+              user.id
             )
             .then(([row]) => {
-              votedCount = row["count"];
+              votedCount = row.count;
             });
         }
       })
@@ -258,33 +261,39 @@ app.post("/vote", (req, res) => {
 
   p.then(() => {
     if (user == null) {
-      return { candidates: candidates, message: "個人情報に誤りがあります" };
-    } else if (user["votes"] < parseInt(req.body.vote_count, 10) + votedCount) {
-      return { candidates: candidates, message: "投票数が上限を超えています" };
-    } else if (req.body.candidate == null || req.body.candidate == "") {
-      return { candidates: candidates, message: "候補者を記入してください" };
-    } else if (candidate == null) {
+      return { candidates, message: "個人情報に誤りがあります" };
+    }
+    if (user.votes < parseInt(req.body.vote_count, 10) + votedCount) {
+      return { candidates, message: "投票数が上限を超えています" };
+    }
+    if (req.body.candidate == null || req.body.candidate == "") {
+      return { candidates, message: "候補者を記入してください" };
+    }
+    if (candidate == null) {
       return {
-        candidates: candidates,
+        candidates,
         message: "候補者を正しく記入してください"
       };
-    } else if (req.body.keyword == null || req.body.keyword == "") {
-      return { candidates: candidates, message: "投票理由を記入してください" };
+    }
+    if (req.body.keyword == null || req.body.keyword == "") {
+      return { candidates, message: "投票理由を記入してください" };
     }
 
     // 元コードの意図がよくわからないのでvariableにデータキャッシュして全部入れていく暴挙に走ります
-    let cache = [];
+    const cache = [];
     for (let i = 0; i < req.body.vote_count; i++) {
-      p = p.then(() =>{
-        cache.push([user["id"], candidate["id"], req.body.keyword]);
+      p = p.then(() => {
+        cache.push([user.id, candidate.id, req.body.keyword]);
       });
     }
-    pool.query("INSERT INTO votes (user_id, candidate_id, keyword) VALUES ?", [cache]);
-    return { candidates: candidates, message: "投票に成功しました" };
+    pool.query("INSERT INTO votes (user_id, candidate_id, keyword) VALUES ?", [
+      cache
+    ]);
+    return { candidates, message: "投票に成功しました" };
   }).then(content =>
     res.render("layout", {
       file: "vote",
-      content: content
+      content
     })
   );
 });
@@ -294,8 +303,8 @@ app.get("/initialize", (_, res) => {
 });
 
 var server = app.listen(8080, function() {
-  var host = server.address().address;
-  var port = server.address().port;
+  const host = server.address().address;
+  const { port } = server.address();
 
   console.log("Example app listening at http://%s:%s", host, port);
 });
